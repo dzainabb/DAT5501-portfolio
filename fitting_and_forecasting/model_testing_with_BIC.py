@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from scipy.stats import chisquare
 import pandas as pd
 
-# Model testing using Chi-squared statistic to find best polynomial degree fit
+# Model testing using BIC statistic to find best polynomial degree fit
 
 #FROM PERVIOUS SCRIPTS
 #load data
@@ -28,7 +28,7 @@ y_test = test_df['Value'].values
 
 # range of polynomial degrees to test
 degrees = range(1, 16)    
-chi2_per_dof = []
+bic_values = []
 models = []
 
 for deg in degrees:
@@ -38,18 +38,18 @@ for deg in degrees:
     models.append(model)
 
     # predictions (expected values)
-    expected = model(x_test)
+    y_pred = model(x_test)
 
-    # compute χ² statistic for conintiosue data - gold prices
-    dof = len(y_test)-(deg+1) # degrees of freedom
+    # compute BIC
+    rss = np.sum((y_test - y_pred) ** 2)
+    n = len(y_test)
+    k = deg + 1  # number of parameters
 
-    chi2_dof= np.sum(((y_test - expected) ** 2) / expected)
-
-#
-    chi2_per_dof.append(chi2_dof)
+    bic = n * np.log(rss / n) + k * np.log(n)
+    bic_values.append(bic)
 
 #higlht best model
-best_index = np.argmin(chi2_per_dof)
+best_index = np.argmin(bic_values)
 best_degree = degrees[best_index]
 best_model = models[best_index]
 
@@ -58,11 +58,11 @@ best_model = models[best_index]
 plt.figure(figsize=(12, 6))
 plt.scatter(x_test, y_test, color='black', label='Observed Data', s=20)
 plt.plot(x_test, best_model(x_test), color='red', label=f'Best Fit (Degree {best_degree})', linewidth=2)
-plt.title(f"Best Model Fit: Polynomial Degree {best_degree}", fontsize=16)
+plt.title(f"Best Model Fit: Polynomial Degree {best_degree}. BIC", fontsize=16)
 plt.xlabel("Date (Ordinal)", fontsize=14)
 plt.ylabel("Gold Price (USD/oz)", fontsize=14)
 plt.legend()
 plt.grid(True, linestyle='--', alpha=0.6)
 plt.show()
-print(f"Best polynomial degree: {best_degree} with weighted χ²/dof = {chi2_per_dof[best_index][0]:.4f}")
+print(f"Best polynomial degree: {best_degree} with BIC values = {bic_values[best_index][0]:.4f}")
 
